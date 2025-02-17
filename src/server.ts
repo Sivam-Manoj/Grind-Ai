@@ -20,6 +20,24 @@ app.use(express.urlencoded({ extended: true }));
 // Initialize OpenAI SDK
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// Root route for testing
+app.get('/', (req: Request, res: Response) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Hello World</title>
+    </head>
+    <body>
+      <h1>Hello, this is a test page!</h1>
+      <p>Vercel is working correctly.</p>
+    </body>
+    </html>
+  `);
+});
+
 // POST route to receive form data and process AI workout plan
 app.post('/ai/workout-plan', async (req: Request, res: Response) => {
   try {

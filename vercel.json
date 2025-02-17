@@ -8,6 +8,10 @@
   ],
   "routes": [
     {
+      "src": "/ai/workout-plan",
+      "dest": "/src/server.ts"
+    },
+    {
       "src": "/(.*)",
       "dest": "/"
     }

@@ -13,7 +13,25 @@ dotenv.config();
 const app = express();
 const port: number = Number(process.env.PORT) || 3301;
 
-app.use(cors());
+const allowedOrigins = ['https://jazzy-frangollo-f184b7.netlify.app']; // List all allowed origins
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (origin && allowedOrigins.indexOf(origin) !== -1) {
+        // If origin is defined and allowed, allow the request
+        callback(null, true);
+      } else if (!origin) {
+        // Allow requests without an origin (e.g., Postman or server-to-server)
+        callback(null, true);
+      } else {
+        // If origin is not allowed, block the request
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

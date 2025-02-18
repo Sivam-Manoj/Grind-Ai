@@ -2305,7 +2305,10 @@ const {
       c = async (f) => {
         f.preventDefault(), r(!0), o('');
         try {
-          const l = await x.post('http://localhost:3301/ai/workout-plan', e);
+          const l = await x.post(
+            'https://grind-ai.vercel.app/ai/workout-plan',
+            e
+          );
           o(l.data.message),
             ye.success('Workout plan successfully sent to your email!');
         } catch {

@@ -1,31 +1,15 @@
-"use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendEmailWithPDF = sendEmailWithPDF;
-const nodemailer_1 = __importDefault(require("nodemailer"));
+import nodemailer from 'nodemailer';
 // Function to send an email with the PDF attachment
-function sendEmailWithPDF(email, pdfPath) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const transporter = nodemailer_1.default.createTransport({
-            service: 'gmail',
-            auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_PASS },
-        });
-        const mailOptions = {
-            from: process.env.GMAIL_USER,
-            to: email,
-            subject: 'Your Workout Plan',
-            html: `
+export async function sendEmailWithPDF(email, pdfPath) {
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_PASS },
+    });
+    const mailOptions = {
+        from: process.env.GMAIL_USER,
+        to: email,
+        subject: 'Your Workout Plan',
+        html: `
       <div style="font-family: Arial, sans-serif; color: #fff; background-color: #B22222; padding: 20px; border-radius: 8px;">
         <div style="text-align: center;">
           <h1 style="color: #fff; font-size: 36px; font-weight: bold;">🔥 Grind AI</h1>
@@ -42,15 +26,14 @@ function sendEmailWithPDF(email, pdfPath) {
         </div>
       </div>
     `,
-            attachments: [
-                {
-                    filename: 'Workout_Plan.pdf',
-                    path: pdfPath,
-                    contentType: 'application/pdf',
-                },
-            ],
-        };
-        yield transporter.sendMail(mailOptions);
-        console.log(`📧 Email sent to ${email}`);
-    });
+        attachments: [
+            {
+                filename: 'Workout_Plan.pdf',
+                path: pdfPath,
+                contentType: 'application/pdf',
+            },
+        ],
+    };
+    await transporter.sendMail(mailOptions);
+    console.log(`📧 Email sent to ${email}`);
 }

@@ -1,4 +1,7 @@
-export function generateWorkoutHTML(workoutPlan) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateWorkoutHTML = generateWorkoutHTML;
+function generateWorkoutHTML(workoutPlan) {
     // Check for necessary fields in workoutPlan object
     if (!workoutPlan.workout_plan ||
         !workoutPlan.workout_plan.muscle_groups ||

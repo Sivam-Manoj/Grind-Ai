@@ -1,4 +1,7 @@
-export const createContent = (age, gender, weight, workoutPlan, budgetStyle) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createContent = void 0;
+const createContent = (age, gender, weight, workoutPlan, budgetStyle) => {
     return `Generate a structured JSON fitness plan for a ${age}-year-old ${gender} weighing ${weight}kg, following a ${workoutPlan} workout plan with a ${budgetStyle} budget style.
 
   The plan should include:
@@ -66,3 +69,4 @@ export const createContent = (age, gender, weight, workoutPlan, budgetStyle) => 
     }
   }`;
 };
+exports.createContent = createContent;

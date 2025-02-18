@@ -22,7 +22,7 @@ app.use(express.urlencoded({ extended: true }));
 // Initialize OpenAI SDK
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const distPath = path.join(__dirname, '../dist'); // Adjust the path if needed
+const distPath = path.join(__dirname, '../build'); // Adjust the path if needed
 app.use(express.static(distPath));
 
 // POST route to receive form data and process AI workout plan

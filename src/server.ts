@@ -8,29 +8,13 @@ import { generatePDF } from './utils/generatePDF';
 import { sendEmailWithPDF } from './utils/sendEmailWithPDF';
 import { createContent } from './utils/createContent';
 
+import path from 'path'; // ✅ Import path module
 dotenv.config();
 
 const app = express();
 const port: number = Number(process.env.PORT) || 3301;
 
-const allowedOrigins = ['https://jazzy-frangollo-f184b7.netlify.app']; // List all allowed origins
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (origin && allowedOrigins.indexOf(origin) !== -1) {
-        // If origin is defined and allowed, allow the request
-        callback(null, true);
-      } else if (!origin) {
-        // Allow requests without an origin (e.g., Postman or server-to-server)
-        callback(null, true);
-      } else {
-        // If origin is not allowed, block the request
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-  })
-);
+app.use(cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -38,23 +22,8 @@ app.use(express.urlencoded({ extended: true }));
 // Initialize OpenAI SDK
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Root route for testing
-app.get('/', (req: Request, res: Response) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Hello World</title>
-    </head>
-    <body>
-      <h1>Hello, this is a test page!</h1>
-      <p>Vercel is working correctly.</p>
-    </body>
-    </html>
-  `);
-});
+const distPath = path.join(__dirname, '../dist'); // Adjust the path if needed
+app.use(express.static(distPath));
 
 // POST route to receive form data and process AI workout plan
 app.post('/ai/workout-plan', async (req: Request, res: Response) => {
@@ -102,6 +71,11 @@ app.post('/ai/workout-plan', async (req: Request, res: Response) => {
     console.error(error);
     res.status(500).json({ message: 'Error processing request', error });
   }
+});
+
+// Root route for dist html static files
+app.get('*', (req: Request, res: Response) => {
+  res.sendFile(path.join(distPath, 'index.html'));
 });
 
 // Start Server

@@ -225,7 +225,6 @@ export function generateWorkoutHTML(workoutPlan) {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 20px;
             padding: 10px;
           }
           .footer span {
@@ -264,7 +263,7 @@ export function generateWorkoutHTML(workoutPlan) {
 
         <!-- Footer Section -->
         <div class="footer">
-          <span><i class="flame-icon">🔥</i> Grid AI</span>
+          <span><i class="flame-icon">🔥</i> Grind AI</span>
           <span>Developed by Manoj</span>
         </div>
       </body>

@@ -10,18 +10,25 @@
     "dev": "tsc && nodemon dist/server.js"
   },
   "dependencies": {
-    "express": "^4.21.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
+    "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.10.1",
     "nodemailer": "^6.10.0",
     "openai": "^4.85.1",
-    "puppeteer": "^24.2.1"
+    "puppeteer": "^24.2.1",
+    "retext": "^9.0.0",
+    "retext-english": "^5.0.0",
+    "retext-stringify": "^4.0.0",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.0.0"
   },
   "devDependencies": {
-    "@types/node": "^22.13.4",
+    "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/node": "^22.13.4",
+    "@types/nodemailer": "^6.4.17",
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3"

@@ -3,19 +3,17 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { OpenAI } from 'openai';
 import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
+import { createContent } from './utils/createContent.js';
 import { generateWorkoutHTML } from './utils/generateWorkoutHTML.js';
 import { generatePDF } from './utils/generatePDF.js';
 import { sendEmailWithPDF } from './utils/sendEmailWithPDF.js';
-import { createContent } from './utils/createContent.js';
+import { unified } from 'unified';
+import retextEnglish from 'retext-english';
+import retextStringify from 'retext-stringify';
+import { visit } from 'unist-util-visit';
+import type { Text } from 'nlcst';
 
 dotenv.config();
-
-// Fix __dirname for ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 const port: number = Number(process.env.PORT) || 3301;
@@ -27,11 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 // Initialize OpenAI SDK
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Serve static files from the dist/build folder
-const distPath = path.join(__dirname, '../build');
-app.use(express.static(distPath));
-
-// Define POST route for handling AI workout plan request
+// POST route to receive form data and process AI workout plan
 app.post('/ai/workout-plan', async (req: Request, res: Response) => {
   try {
     const { email, gender, age, weight, workoutPlan, budgetStyle } = req.body;
@@ -41,15 +35,16 @@ app.post('/ai/workout-plan', async (req: Request, res: Response) => {
       messages: [
         {
           role: 'system',
-          content: `You are a world-class fitness trainer and nutritionist. Provide highly detailed, scientifically proven, and well-structured JSON fitness plans, including workout routines, meal plans, dietary restrictions, calorie deficit strategies, and budget-friendly meal options.`,
+          content: `You are a world-class fitness trainer and nutritionist. Provide highly detailed, Scientificly proved and best and structured JSON fitness plans, including workout routines, meal plans, dietary restrictions, calorie deficit strategies, and budget-friendly meal options.`,
         },
         {
           role: 'user',
           content: createContent(age, gender, weight, workoutPlan, budgetStyle),
         },
       ],
+      response_format: { type: 'json_object' },
       temperature: 0.7,
-      max_tokens: 16000,
+      max_tokens: 16000, // ✅ Increased max token limit for detailed response
     });
 
     // Validate OpenAI Response
@@ -57,23 +52,18 @@ app.post('/ai/workout-plan', async (req: Request, res: Response) => {
       throw new Error('No response from OpenAI');
     }
 
-    const workoutDataRaw =
-      response.choices[0]?.message?.content?.trim() || '{}';
+    const workoutDataRaw = response.choices[0]?.message?.content || '{}';
+    console.log('OpenAI Response:', workoutDataRaw); // Debugging
 
-    let workoutData;
-    try {
-      workoutData = JSON.parse(workoutDataRaw);
-    } catch (error) {
-      console.error('Failed to parse OpenAI response:', workoutDataRaw);
-    }
+    const workoutData = JSON.parse(workoutDataRaw || '{}');
 
-    // Convert AI response into HTML format
+    // Step 2: Convert AI response into HTML format
     const htmlContent = generateWorkoutHTML(workoutData);
 
-    // Convert HTML to a PDF
+    // Step 3: Convert HTML to a PDF
     const pdfPath = await generatePDF(htmlContent);
 
-    // Send Email with PDF
+    // Step 4: Send Email with PDF
     await sendEmailWithPDF(email, pdfPath);
 
     res.status(200).json({ message: 'Workout plan sent successfully!' });
@@ -82,11 +72,74 @@ app.post('/ai/workout-plan', async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Error processing request', error });
   }
 });
+// Function to fix spacing issues
+// Function to fix spacing issues
+const fixSpacing = (text: string): string => {
+  return text
+    .replace(/([a-z])([A-Z])/g, '$1 $2') // Fix camelCase words
+    .replace(/([a-zA-Z])([,.!?])/g, '$1 $2') // Ensure space before punctuation
+    .replace(/(?<=\w)(?=[A-Z])/g, ' ') // Ensure space before capital letters
+    .replace(/(?<=\w)(?=[.,!?])/g, ' ') // Ensure space before punctuation
+    .replace(/\s+/g, ' ') // Normalize spaces
+    .trim();
+};
 
-// Serve the frontend (static HTML files)
-app.get('*', (req: Request, res: Response) => {
-  res.sendFile(path.join(distPath, 'index.html'));
+app.post('/ai/chat', async (req: Request, res: Response) => {
+  try {
+    const { message } = req.body;
+
+    // Set up SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders(); // Ensure headers are sent immediately
+
+    // Create OpenAI streaming request
+    const openaiResponse = await openai.chat.completions.create({
+      model: 'gpt-4.5-preview',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a fitness expert and certified personal trainer. You ONLY provide guidance related to fitness, workout routines, diet plans, weight loss strategies, strength training, and general health.`,
+        },
+        { role: 'user', content: message },
+      ],
+      temperature: 0.7,
+      max_tokens: 500,
+      stream: true, // Enable streaming
+    });
+
+    let tempBuffer = '';
+
+    // Stream the response with spacing fixes
+    for await (const chunk of openaiResponse) {
+      let content = chunk?.choices?.[0]?.delta?.content;
+      if (content) {
+        tempBuffer += content;
+        const words = tempBuffer.split(/\s+/);
+
+        if (words.length > 1) {
+          const completeWords = words.slice(0, -1).join(' ');
+          res.write(`data: ${fixSpacing(completeWords)}\n\n`);
+          tempBuffer = words[words.length - 1];
+        }
+      }
+    }
+
+    // Send the last buffered word
+    if (tempBuffer.trim()) {
+      res.write(`data: ${fixSpacing(tempBuffer.trim())}\n\n`);
+    }
+
+    // Indicate that the stream is complete
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch (error: any) {
+    console.error('Error communicating with OpenAI:', error);
+    res
+      .status(500)
+      .json({ message: 'Error processing request', error: error.message });
+  }
 });
-
-// Start the server
+// Start Server
 app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
